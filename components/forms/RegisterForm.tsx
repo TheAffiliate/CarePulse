@@ -9,10 +9,12 @@ import { Form, FormControl } from "@/components/ui/form";
 import CustomFormField from "../CustomFormField";
 import SubmitButton from "../SubmitButton";
 import { useRouter } from "next/navigation";
-import { createUser } from "@/lib/actions/patient.actions";
+import { createUser, registerPatient } from "@/lib/actions/patient.actions";
 import { FormFieldType } from "./PatientForm";
-import { Doctors, GenderOptions } from "@/constants";
+import { Doctors, GenderOptions, IdentificationTypes } from "@/constants";
 import { SelectItem } from "@/components/ui/select";
+import FileUploader from "../FileUploader";
+import { PatientFormValidation } from "@/lib/validation";
 
 interface UserFormValues {
   name: string;
@@ -25,27 +27,28 @@ interface UserFormValues {
   emergencyContactName: string;
   emergencyContactNumber: string;
   primaryPhysician: string;
+  MedicalAidProvider: string;
+  MedicalAidNumber: string;
+  allergies: string;
+  currentMedication: string;
+  familyMedicalHistory: string;
+  pastMedicalHistory: string;
+  identificationType: string;
+  identificationNumber: string;
+  identificationDocument: File[];
+  treatmentConsent: boolean;
+  disclosureConsent: boolean;
+  privacyConsent: boolean;
 }
 
 const RegisterForm = ({ user }: { user: User }) => {
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
 
+  
+
   const form = useForm<UserFormValues>({
-    resolver: zodResolver(
-      z.object({
-        name: z.string().min(2),
-        email: z.string().email(),
-        phone: z.string().min(10),
-        gender: z.string(),
-        birthDate: z.date().nullable(),
-        address: z.string().min(5),
-        occupation: z.string().optional(),
-        emergencyContactName: z.string().min(2),
-        emergencyContactNumber: z.string().min(10),
-        primaryPhysician: z.string(),
-      })
-    ),
+    resolver: zodResolver(PatientFormValidation),
     defaultValues: {
       name: "",
       email: "",
@@ -57,26 +60,59 @@ const RegisterForm = ({ user }: { user: User }) => {
       emergencyContactName: "",
       emergencyContactNumber: "",
       primaryPhysician: "",
+      MedicalAidProvider: "",
+      MedicalAidNumber: "",
+      allergies: "",
+      currentMedication: "",
+      familyMedicalHistory: "",
+      pastMedicalHistory: "",
+      identificationType: "",
+      identificationNumber: "",
+      identificationDocument: [],
+      treatmentConsent: false,
+      disclosureConsent: false,
+      privacyConsent: false,
     },
   });
 
   async function onSubmit(values: UserFormValues) {
     setIsLoading(true);
     try {
-      console.log("Submitting form data:", values);
-      const user = await createUser(values);
+      
+      let formData
 
-      if (user && user.$id) {
-        router.push(`/patients/${user.$id}/register`);
-      } else {
-        router.push("/patients/register");
+      if (values.identificationDocument && values.identificationDocument.length > 0) {
+        const blobFile = new Blob([values.identificationDocument[0]], {
+           type: values.identificationDocument[0].type });
+        formData = new FormData();
+        formData.append("identificationDocument", values.identificationDocument[0]);
+        formData.append("fileName", values.identificationDocument[0].name);
       }
-    } catch (error) {
-      console.error("Error during form submission:", error);
-    } finally {
-      setIsLoading(false);
+
+      try {
+        const patientData = {
+          ...values,
+          userId: user.$id,
+          birthDate: values.birthDate ? new Date(values.birthDate) : new Date(),
+          identificationDocument: formData,
+          gender: values.gender as Gender, // Ensure gender matches the expected type
+        };
+
+        const patient = await registerPatient(patientData);
+
+        if (patient) {
+          router.push(`/patients/${user.$id}/new-appointment`);
+        }
+
+      } catch (error) {
+        console.error("Error creating patient data:", error);
+      }
+      } catch (error) {
+        console.error("Error during form submission:", error);
+      } finally {
+        setIsLoading(false);
+      }
     }
-  }
 
   return (
     <Form {...form}>
@@ -248,7 +284,7 @@ const RegisterForm = ({ user }: { user: User }) => {
             fieldType={FormFieldType.INPUT}
             control={form.control}
             name="MedicalAidProvider"
-            label="Medical-Aid Provider"
+            label="Medical Aid Provider"
             placeholder="Discovery Health"
             iconAlt=""
           />
@@ -257,7 +293,7 @@ const RegisterForm = ({ user }: { user: User }) => {
             fieldType={FormFieldType.INPUT}
             control={form.control}
             name="MedicalAidNumber"
-            label="Medical-Aid Number"
+            label="Medical Aid Number"
             placeholder="Your Membership number"
             iconAlt=""
           />
@@ -307,9 +343,79 @@ const RegisterForm = ({ user }: { user: User }) => {
           <h2 className="sub-header">Identification & Verification:</h2>
         </section>
 
+        <CustomFormField
+          fieldType={FormFieldType.SELECT}
+          control={form.control}
+          name="identificationType"
+          label="Identification Type"
+          placeholder="Select An Identification Type"
+          iconAlt="Doctor Icon"
+        >
+          {IdentificationTypes.map((types) => (
+            <SelectItem key={types} value={types}>
+              {types}
+            </SelectItem>
+          ))}
+        </CustomFormField>
+
+        <div className="flex flex-col gap-6 xl:flex-row">
+          <CustomFormField
+            fieldType={FormFieldType.INPUT}
+            control={form.control}
+            name="identificationNumber"
+            label="Identification Number"
+            placeholder="Your ID Number"
+            iconAlt=""
+          />
+        </div>
         
+        <CustomFormField
+          fieldType={FormFieldType.SKELETON}
+          control={form.control}
+          name="identificationDocument"
+          label="Identification Document"
+          iconAlt=""
+          renderSkeleton={({ value, onChange }) => (
+            <FormControl>
+              <FileUploader 
+                files={value} 
+                onChange={onChange}
+              />
+            </FormControl>
+          )}
+        />
+
+        <section className="space-y-6">
+          <div className="mb-9 space-y-1">
+            <h2 className="sub-header">Consent & Privacy:</h2>
+          </div>
+        </section>
         
-        <SubmitButton isLoading={isLoading}>Get Started</SubmitButton>
+        <CustomFormField
+          fieldType={FormFieldType.CHECKBOX}
+          control={form.control}
+          name="treatmentConsent"
+          label="I consent to treatment of my health condition."
+          iconAlt={""}
+        />
+
+        <CustomFormField
+          fieldType={FormFieldType.CHECKBOX}
+          control={form.control}
+          name="disclosureConsent"
+          label="I consent to the use and disclosure of my health information for treatment purposes."
+          iconAlt={""}
+        />
+
+        <CustomFormField
+          fieldType={FormFieldType.CHECKBOX}
+          control={form.control}
+          name="privacyConsent"
+          label="I acknowledge that I have reviewed and consent to the privacy policy."
+          iconAlt={""}
+        />
+        
+        <SubmitButton isLoading={isLoading}>Submit and Continue</SubmitButton>
       </form>
     </Form>
   );

@@ -9,7 +9,7 @@ import CustomFormField from "../CustomFormField";
 import PhoneInput from "react-phone-number-input";
 import SubmitButton from "../SubmitButton";
 import { useState } from "react";
-import { userFormValidation } from "@/lib/validation";
+import { UserFormValidation } from "@/lib/validation";
 import { useRouter } from "next/navigation";
 import { createUser } from "@/lib/actions/patient.actions";
 
@@ -30,8 +30,8 @@ const PatientForm = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   // 1. Define your form.
-  const form = useForm<z.infer<typeof userFormValidation>>({
-    resolver: zodResolver(userFormValidation),
+  const form = useForm<z.infer<typeof UserFormValidation>>({
+    resolver: zodResolver(UserFormValidation),
     defaultValues: {
       name: "",
       email: "",
@@ -40,7 +40,7 @@ const PatientForm = () => {
   });
 
   // 2. Define a submit handler.
-  async function onSubmit({ name, email, phone }: z.infer<typeof userFormValidation>) {
+  async function onSubmit({ name, email, phone }: z.infer<typeof UserFormValidation>) {
     // Submit the form values.
     // ✅ This will be type-safe and validated.
 

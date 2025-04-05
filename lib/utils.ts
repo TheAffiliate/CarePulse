@@ -7,7 +7,14 @@ export function cn(...inputs: ClassValue[]) {
 
 export const parseStringify = (value: any) => JSON.parse(JSON.stringify(value));
 
-export const convertFileToUrl = (file: File) => URL.createObjectURL(file);
+// utils.ts
+export function convertFileToUrl(file: File): string {
+  if (!file || !(file instanceof File)) {
+    console.error("Invalid file object:", file);
+    return ""; // or handle the error as needed
+  }
+  return URL.createObjectURL(file);
+}
 
 // FORMAT DATE TIME
 export const formatDateTime = (dateString: Date | string) => {

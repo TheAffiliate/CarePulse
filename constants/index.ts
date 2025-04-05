@@ -12,8 +12,8 @@ export const PatientFormDefaultValues = {
   emergencyContactName: "",
   emergencyContactNumber: "",
   primaryPhysician: "",
-  insuranceProvider: "",
-  insurancePolicyNumber: "",
+  MedicalAidProvider: "",
+  MedicalAidNumber: "",
   allergies: "",
   currentMedication: "",
   familyMedicalHistory: "",
@@ -27,18 +27,16 @@ export const PatientFormDefaultValues = {
 };
 
 export const IdentificationTypes = [
-  "Birth Certificate",
-  "Driver's License",
-  "Medical Insurance Card/Policy",
-  "Military ID Card",
-  "National Identity Card",
-  "Passport",
-  "Resident Alien Card (Green Card)",
-  "Social Security Card",
-  "State ID Card",
-  "Student ID Card",
-  "Voter ID Card",
+  "Smart ID Card", // Official national ID for South African citizens and permanent residents
+  "Green Barcoded ID Book", // Older version of the South African ID (still valid)
+  "Passport", // Used for international travel and identification
+  "Driver's License", // Government-issued driver's license
+  "Birth Certificate", // Used for minors who do not yet have an ID card
+  "Temporary Identity Certificate", // Issued while waiting for a permanent Smart ID Card
+  "Medical Aid Card/Policy", // Used for medical aid verification
+  "Military ID Card", // Issued to South African National Defence Force (SANDF) members
 ];
+
 
 export const Doctors = [
   {
